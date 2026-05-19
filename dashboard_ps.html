@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard PS — Distribución de Tareas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ashlie: #D4537E;
+    --ashlie-light: #FBEAF0;
+    --ashlie-dark: #72243E;
+    --cristina: #378ADD;
+    --cristina-light: #E6F1FB;
+    --cristina-dark: #0C447C;
+    --ambas: #1D9E75;
+    --ambas-light: #E1F5EE;
+    --ambas-dark: #085041;
+    --c1: #185FA5;
+    --c1-bg: #E6F1FB;
+    --c2: #3B6D11;
+    --c2-bg: #EAF3DE;
+    --c3: #854F0B;
+    --c3-bg: #FAEEDA;
+    --bg: #0F0F10;
+    --surface: #1A1A1C;
+    --surface2: #222225;
+    --border: rgba(255,255,255,0.07);
+    --text: #F0EEE8;
+    --muted: #888680;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Header */
+  .header {
+    padding: 2rem 2.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header-left h1 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .header-left p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+  }
+  .week-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 14px;
+  }
+  .week-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .week-btn:hover { background: rgba(255,255,255,0.1); }
+  .week-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: center;
+    color: var(--text);
+  }
+  .week-parity {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    margin-left: 4px;
+  }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-card {
+    padding: 1.5rem 2.5rem;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.ashlie::before { background: var(--ashlie); }
+  .stat-card.cristina::before { background: var(--cristina); }
+  .stat-card + .stat-card { border-left: 1px solid var(--border); }
+
+  .stat-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .stat-card.ashlie .stat-avatar { background: rgba(212,83,126,0.2); color: #F093B5; }
+  .stat-card.cristina .stat-avatar { background: rgba(55,138,221,0.2); color: #7BB8EF; }
+  .stat-name { font-size: 13px; color: var(--muted); font-weight: 400; margin-bottom: 4px; }
+  .stat-count { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+  .stat-card.ashlie .stat-count { color: #F093B5; }
+  .stat-card.cristina .stat-count { color: #7BB8EF; }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* Main content */
+  .main { padding: 2rem 2.5rem; }
+
+  .turno-section { margin-bottom: 2rem; }
+  .turno-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .turno-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 99px;
+    letter-spacing: 0.05em;
+  }
+  .turno-C1 { background: rgba(24,95,165,0.2); color: #7BB8EF; border: 1px solid rgba(24,95,165,0.3); }
+  .turno-C2 { background: rgba(59,109,17,0.2); color: #97C459; border: 1px solid rgba(59,109,17,0.3); }
+  .turno-C3 { background: rgba(133,79,11,0.2); color: #FAC775; border: 1px solid rgba(133,79,11,0.3); }
+  .turno-line { flex: 1; height: 1px; background: var(--border); }
+
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-card:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.14); }
+  .task-card::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+  .task-card.resp-ashlie::after { background: var(--ashlie); }
+  .task-card.resp-cristina::after { background: var(--cristina); }
+  .task-card.resp-ambas::after { background: var(--ambas); }
+
+  .task-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    padding-left: 6px;
+  }
+
+  .task-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 6px;
+  }
+
+  .resp-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .resp-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .resp-ashlie .resp-dot { background: var(--ashlie); }
+  .resp-cristina .resp-dot { background: var(--cristina); }
+  .resp-ambas .resp-dot { background: var(--ambas); }
+  .resp-ashlie .resp-name { color: #F093B5; }
+  .resp-cristina .resp-name { color: #7BB8EF; }
+  .resp-ambas .resp-name { color: #5DCAA5; }
+
+  .rota-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 2px 7px;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 1.5rem 2.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .footer-note {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  @media (max-width: 600px) {
+    .header, .main, .footer { padding: 1.25rem; }
+    .stats .stat-card { padding: 1.25rem; }
+    .tasks-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Distribución de Tareas</h1>
+    <p>Problem Solvers · Rotación semanal</p>
+  </div>
+  <div class="week-control">
+    <button class="week-btn" onclick="changeWeek(-1)">‹</button>
+    <span class="week-display" id="week-display">Semana 1</span>
+    <span class="week-parity" id="week-parity">base</span>
+    <button class="week-btn" onclick="changeWeek(1)">›</button>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat-card ashlie">
+    <div class="stat-avatar">A</div>
+    <div class="stat-name">Ashlie</div>
+    <div class="stat-count" id="count-ashlie">0</div>
+    <div class="stat-sub">tareas asignadas</div>
+  </div>
+  <div class="stat-card cristina">
+    <div class="stat-avatar">C</div>
+    <div class="stat-name">Cristina</div>
+    <div class="stat-count" id="count-cristina">0</div>
+    <div class="stat-sub">tareas asignadas</div>
+  </div>
+</div>
+
+<main class="main" id="main-content"></main>
+
+<footer class="footer">
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#D4537E"></span>Ashlie</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#378ADD"></span>Cristina</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Ambas</div>
+  </div>
+  <div class="footer-note">↻ rota · cambia cada semana</div>
+</footer>
+
+<script>
+let week = 1;
+
+const baseRows = [
+  { tarea: "Reparación de paquetes", turno: "C1", base: "Ashlie" },
+  { tarea: "Revisión ID ND",         turno: "C1", base: "Cristina" },
+  { tarea: "Ronda de línea",         turno: "C1", base: "Ashlie" },
+  { tarea: "Cierre de sorting",      turno: "C1", base: "Cristina" },
+  { tarea: "Soporte de despacho",    turno: "C1", base: "Ashlie" },
+  { tarea: "Monitoreo auditorías",   turno: "C1", base: "Cristina" },
+  { tarea: "Monitoreo aduanas",      turno: "C1", base: "Ashlie" },
+  { tarea: "Inventario",             turno: "C1", base: "Ambas" },
+  { tarea: "Revisión de blancos",    turno: "C1", base: "Ashlie" },
+  { tarea: "Ronda de línea",         turno: "C2", base: "Cristina" },
+  { tarea: "Reparación de paquetes", turno: "C2", base: "Ashlie" },
+  { tarea: "Cierre de sorting",      turno: "C2", base: "Cristina" },
+  { tarea: "Soporte de despacho",    turno: "C2", base: "Ashlie" },
+  { tarea: "Monitoreo auditorías",   turno: "C2", base: "Cristina" },
+  { tarea: "Monitoreo aduanas",      turno: "C2", base: "Ashlie" },
+  { tarea: "Inventario",             turno: "C2", base: "Ambas" },
+  { tarea: "Revisión de blancos",    turno: "C2", base: "Cristina" },
+  { tarea: "Ronda de línea",         turno: "C3", base: "Cristina" },
+  { tarea: "Inventario",             turno: "C3", base: "Ambas" },
+];
+
+function getResp(base) {
+  if (base === "Ambas") return "Ambas";
+  const even = week % 2 === 0;
+  if (base === "Ashlie") return even ? "Cristina" : "Ashlie";
+  return even ? "Ashlie" : "Cristina";
+}
+
+function changeWeek(d) {
+  week = Math.max(1, week + d);
+  document.getElementById("week-display").textContent = "Semana " + week;
+  document.getElementById("week-parity").textContent = week % 2 === 0 ? "rotado" : "base";
+  render();
+}
+
+function render() {
+  const main = document.getElementById("main-content");
+  const turnos = ["C1", "C2", "C3"];
+  let countA = 0, countC = 0;
+  let html = "";
+
+  turnos.forEach(turno => {
+    const tareas = baseRows.filter(r => r.turno === turno);
+    html += `<div class="turno-section">
+      <div class="turno-header">
+        <span class="turno-pill turno-${turno}">Turno ${turno}</span>
+        <div class="turno-line"></div>
+      </div>
+      <div class="tasks-grid">`;
+
+    tareas.forEach(row => {
+      const resp = getResp(row.base);
+      const isAmbas = resp === "Ambas";
+      const isRotate = row.base !== "Ambas";
+      const respClass = "resp-" + resp.toLowerCase();
+      const respName = isAmbas ? "Ambas" : resp;
+
+      if (resp === "Ashlie") countA++;
+      else if (resp === "Cristina") countC++;
+      else { countA++; countC++; }
+
+      html += `<div class="task-card ${respClass}">
+        <div class="task-name">${row.tarea}</div>
+        <div class="task-footer">
+          <div class="resp-badge ${respClass}">
+            <span class="resp-dot"></span>
+            <span class="resp-name">${respName}</span>
+          </div>
+          ${isRotate ? '<span class="rota-tag">↻ rota</span>' : ''}
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  main.innerHTML = html;
+  document.getElementById("count-ashlie").textContent = countA;
+  document.getElementById("count-cristina").textContent = countC;
+}
+
+render();
+</script>
+</body>
+</html>
